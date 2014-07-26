@@ -158,7 +158,6 @@ function getEvents(uri) {
                 // Get the talks data for the event
                 function(dirname, cb) {
 
-                    cb();return;
                     if (ev.talks_count > 0) {
                         request({uri:ev.talks_uri + '?verbose=yes', json:true, gzip:true}, function(err, res, body) {
 
@@ -208,7 +207,10 @@ function getEvents(uri) {
                             },
                             // Check if there's another page of talks
                             function() {
-                                // TODO: this
+                                if (body.meta.next_page) {
+                                    console.log("\n*****");
+                                }
+                                cb();
                             }
                             );
 
@@ -235,5 +237,5 @@ function getEvents(uri) {
 
 }
 
-getEvents('http://api.joind.in/v2.1/events?start=0&resultsperpage=100&verbose=yes');
+getEvents('http://api.joind.in/v2.1/events?start=0&resultsperpage=340&verbose=yes');
 
