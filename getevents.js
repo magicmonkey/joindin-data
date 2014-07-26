@@ -157,68 +157,11 @@ function getEvents(uri) {
 
                 // Get the talks data for the event
                 function(dirname, cb) {
-
                     if (ev.talks_count > 0) {
-                        request({uri:ev.talks_uri + '?verbose=yes', json:true, gzip:true}, function(err, res, body) {
-
-                            async.eachLimit(body.talks, 10, function(tk, cb) {
-                                async.waterfall([
-                                    
-                                    // Generate a filesystem-friendly "unique" ID
-                                    function(cb) {
-                                        var sha1 = crypto.createHash('sha1');
-                                        sha1.update(tk.uri);
-                                        var talkdirname = sha1.digest('hex').substr(0, 6);
-                                        cb(null, talkdirname);
-                                    },
-
-                                    // Create the dir for the talk
-                                    function(talkdirname, cb) {
-                                        mkdirp('events/talks/data/' + talkdirname, function(e) {cb(null, talkdirname);});
-                                    },
-
-                                    // Write the raw talk data
-                                    function(talkdirname, cb) {
-                                        var file = fs.createWriteStream('events/talks/data/' + talkdirname + '/raw.json')
-                                        file.on('open', function() {
-                                            file.write(JSON.stringify(tk, null, 2) + "\n", 'utf8', function(){file.end();});
-                                        });
-                                        file.on('finish', function() {
-                                            cb(null, talkdirname);
-                                        });
-                                    },
-
-                                    // Write the field-by-field talk data
-                                    function(talkdirname, cb) {
-                                        async.each(Object.keys(tk), function(key, cb) {
-                                            var file = fs.createWriteStream('events/talks/data/' + talkdirname + '/' + key)
-                                            file.on('open', function() {
-                                                file.write(JSON.stringify(tk[key], null, 2) + "\n", function(){file.end();});
-                                            });
-                                            file.on('finish', function() {
-                                                cb();
-                                            });
-                                        });
-                                        cb(null, talkdirname);
-                                    },
-
-
-                                ], cb);
-                            },
-                            // Check if there's another page of talks
-                            function() {
-                                if (body.meta.next_page) {
-                                    console.log("\n*****");
-                                }
-                                cb();
-                            }
-                            );
-
-                        });
+                        getTalksFor(ev, dirname, cb);
                     } else {
                         cb();
                     }
-                    
                 }
                 
             ], cb);
@@ -237,5 +180,82 @@ function getEvents(uri) {
 
 }
 
-getEvents('http://api.joind.in/v2.1/events?start=0&resultsperpage=340&verbose=yes');
+function getTalksFor(ev, evdirname, cb) {
+    getTalks(ev.talks_uri + '?verbose=yes', evdirname, cb);
+}
+
+function getTalks(uri, evdirname, next) {
+    request({uri:uri, json:true, gzip:true}, function(err, res, body) {
+
+        async.eachLimit(body.talks, 5, function(tk, cb) {
+            async.waterfall([
+                
+                // Progress meter
+                function (cb) {
+                    util.print('t');
+                    cb();
+                },
+
+                // Generate a filesystem-friendly "unique" ID
+                function(cb) {
+                    var sha1 = crypto.createHash('sha1');
+                    sha1.update(tk.uri);
+                    var talkdirname = sha1.digest('hex').substr(0, 6);
+                    cb(null, talkdirname);
+                },
+
+                // Create the dir for the talk
+                function(talkdirname, cb) {
+                    mkdirp('events/talks/data/' + talkdirname, function(e) {cb(null, talkdirname);});
+                },
+
+                // Write the raw talk data
+                function(talkdirname, cb) {
+                    var file = fs.createWriteStream('events/talks/data/' + talkdirname + '/raw.json')
+                    file.on('open', function() {
+                        file.write(JSON.stringify(tk, null, 2) + "\n", 'utf8', function(){file.end();});
+                    });
+                    file.on('finish', function() {
+                        cb(null, talkdirname);
+                    });
+                },
+
+                // Write the field-by-field talk data
+                function(talkdirname, cb) {
+                    async.each(Object.keys(tk), function(key, cb) {
+                        var file = fs.createWriteStream('events/talks/data/' + talkdirname + '/' + key)
+                        file.on('open', function() {
+                            file.write(JSON.stringify(tk[key], null, 2) + "\n", function(){file.end();});
+                        });
+                        file.on('finish', function() {
+                            cb();
+                        });
+                    });
+                    cb(null, talkdirname);
+                },
+
+                // Link to the talks from the event dir
+                function(talkdirname, cb) {
+                    var dirname2 = 'events/data/' + evdirname + '/talks';
+                    mkdirp(dirname2, function() {
+                        fs.symlink('../../../talks/data/' + talkdirname, dirname2 + '/' + talkdirname, function() {cb();});
+                    });
+                }
+
+            ], cb);
+        },
+        // Check if there's another page of talks
+        function() {
+            if (body.meta.next_page) {
+                getTalks(body.meta.next_page, evdirname, next);
+            } else {
+                next();
+            }
+        }
+        );
+
+    });
+}
+
+getEvents('http://api.joind.in/v2.1/events?start=0&resultsperpage=100&verbose=yes');
 
