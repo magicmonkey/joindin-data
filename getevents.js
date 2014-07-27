@@ -47,7 +47,7 @@ function getEvents(uri) {
                         cb(null, dirname);
                     });
                 },
-
+/*
                 // Write the field-by-field event data
                 function(dirname, cb) {
                     async.each(Object.keys(ev), function(key, cb) {
@@ -61,6 +61,7 @@ function getEvents(uri) {
                     });
                     cb(null, dirname);
                 },
+*/
 
                 // Create links into the event
                 function(dirname, cb) {
@@ -219,7 +220,7 @@ function getTalks(uri, evdirname, next) {
                         cb(null, talkdirname);
                     });
                 },
-
+/*
                 // Write the field-by-field talk data
                 function(talkdirname, cb) {
                     async.each(Object.keys(tk), function(key, cb) {
@@ -233,7 +234,7 @@ function getTalks(uri, evdirname, next) {
                     });
                     cb(null, talkdirname);
                 },
-
+*/
                 // Link to the talks from the event dir
                 function(talkdirname, cb) {
                     var dirname2 = 'events/data/' + evdirname + '/talks';

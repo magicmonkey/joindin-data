@@ -1,0 +1,11 @@
+{
+  "name": "joindin-data",
+  "version": "0.0.1",
+  "author": "Kevin Bowman <github@magicmonkey.org>",
+  "description": "Download all the Joind.in data",
+  "dependencies" : {
+    "request" : "*",
+    "mkdirp" : "*",
+    "async" : "*"
+  }
+}
