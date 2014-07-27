@@ -28,7 +28,7 @@ function getEvents(uri) {
                 function(cb) {
                     var sha1 = crypto.createHash('sha1');
                     sha1.update(ev.uri);
-                    var dirname = sha1.digest('hex').substr(0, 6);
+                    var dirname = sha1.digest('hex').substr(0, 10);
                     cb(null, dirname);
                 },
 
@@ -200,7 +200,7 @@ function getTalks(uri, evdirname, next) {
                 function(cb) {
                     var sha1 = crypto.createHash('sha1');
                     sha1.update(tk.uri);
-                    var talkdirname = sha1.digest('hex').substr(0, 6);
+                    var talkdirname = sha1.digest('hex').substr(0, 10);
                     cb(null, talkdirname);
                 },
 
